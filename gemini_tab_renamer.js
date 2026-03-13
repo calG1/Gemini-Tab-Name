@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Tab Renamer
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.4
 // @description  Automatically updates the Gemini tab title to match the active chat name.
 // @author       Cal Gilbertson (with help from Antigravity)
 // @match        https://gemini.google.com/*
@@ -47,18 +47,26 @@
                 }
             }
 
-            if (newTitle && newTitle.length > 0 && newTitle !== lastTitle) {
+            if (newTitle && newTitle.length > 0 && document.title !== newTitle) {
                 document.title = newTitle;
-                lastTitle = newTitle;
+            } else if (!newTitle && document.title !== "Google Gemini" && document.title !== "Gemini") {
+                // If we couldn't find a title (e.g. while loading a new chat) 
+                // but the title is already something custom, leave it alone.
+                // Otherwise, wait for the DOM to populate.
             }
         } catch (e) {
             // console.error("Gemini Tab Renamer error:", e);
         }
     }
 
-    // Observer to handle SPA navigation and dynamic updates
+    // Polling fallback to catch dynamic loading where mutations might be missed
+    // or happen too fast/slow for the observer hook
+    setInterval(() => {
+        updateTitle();
+    }, 1000);
+
+    // Observer to handle SPA navigation and dynamic updates in the DOM body
     const observer = new MutationObserver((mutations) => {
-        // Debounce or just run. DOM operations are fast enough here.
         updateTitle();
     });
 
@@ -66,6 +74,19 @@
         childList: true,
         subtree: true
     });
+
+    // Specific observer for the <title> tag to prevent Gemini from overwriting it
+    const titleElementNode = document.querySelector('title');
+    if (titleElementNode) {
+        const titleObserver = new MutationObserver(() => {
+            updateTitle();
+        });
+        titleObserver.observe(titleElementNode, {
+            subtree: true,
+            characterData: true,
+            childList: true
+        });
+    }
 
     // Initial check
     updateTitle();
