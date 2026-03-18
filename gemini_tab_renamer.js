@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Tab Renamer
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.6
 // @description  Automatically updates the Gemini tab title to match the active chat name and removes upsell buttons.
 // @author       Cal Gilbertson (with help from Antigravity)
 // @match        https://gemini.google.com/*
@@ -15,7 +15,8 @@
     const style = document.createElement('style');
     style.textContent = `
         g1-dynamic-upsell-button,
-        [data-test-id="g1-dynamic-upsell-button"] {
+        [data-test-id="g1-dynamic-upsell-button"],
+        .g1-upsell-container {
             display: none !important;
         }
     `;
